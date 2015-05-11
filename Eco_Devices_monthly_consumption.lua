@@ -25,10 +25,11 @@ function getmonth(month)
 	return months[tonumber(month)]
 end
 
-local jsonString = fibaro:getGlobalValue("energylist")
+local jsonString = fibaro:getGlobalValue("energylist");
 
 -- null will be decoded to json.null value
-jsonTable = json.decode(jsonString)
+jsonTable = json.decode(jsonString);
+--fibaro:debug(jsonString);
 
 local max = count(jsonTable);
 
@@ -36,9 +37,6 @@ local max = count(jsonTable);
 fibaro:debug("Calcul sur la periode du " .. jsonTable[1].date .. " au " .. jsonTable[max].date);
 
 local hc_day
---table.foreach(jsonTable, hc=tonumber(hc+hc_day))
-
---function count(jsonTable) local k,v,i; i=0; for k, v in pairs(tab) do i = i + 1; end return i; end
 local selfId=fibaro:getSelfId();
 local totalHP = 0;
 local totalHC = 0;
@@ -47,40 +45,46 @@ local table = {};
 HP_cost = 0.1572;
 HC_cost = 0.1096;
 
--- daily iterations
+fibaro:debug("Cost: HP=" .. HP_cost .."€/kWh, HC=" ..HC_cost .. "€/kWh");
+
 local k,v,i; i=0; for k, v in pairs(jsonTable) do 
   _,m,_ = get_date_parts(v.date);
-
   if (lastm ~= m) then 
   	totalHP = 0;
     totalHC = 0;
     lastm = lastm+1
   end
-
   totalHP = totalHP + v.hc_day;  
   totalHC = totalHC + v.hp_day; 
-
+  --fibaro:debug(v.date);
+  --fibaro:debug(json.encode(v));  
   table[m] = { mois = m, totalHP = totalHP, totalHC = totalHC}
+  --fibaro:debug(v.date .. ", m=" .. m .. ", lastm=" .. lastm);
 end
 
--- months of the year iterations
-i=1 ; for k, v in pairs(table) do 
-  local hp_next_bill = 0;
-  local hc_next_bill = 0;
-  local next_bill = 0;
-	local button = "ui.Label" .. i .. ".value";  
-
-  -- calculating the cost of consumption
-  hpc_next_bill = math.floor(v.totalHP/1000*HP_cost);
-  hcc_next_bill = math.floor(v.totalHC/1000*HC_cost);
-  next_bill = math.floor(hpc_next_bill + hcc_next_bill );
-  
-	-- debug monthly_consumption
-	fibaro:debug("mois=" .. getmonth(i) .. ", totalHP=" .. math.floor(v.totalHP/1000) .. " kWh, totalHC=" .. math.floor(v.totalHC/1000) .. " kWh, TOTAL==>" .. next_bill .. "€");
-
-	-- set month label value
-  fibaro:call(selfId, "setProperty", button, "HP=" .. math.floor(v.totalHP/1000) .. " HC=" .. math.floor(v.totalHC/1000) .. " => " .. next_bill .. "€");
-
-	-- go to next month
-	i=i+1;
+-- Affichage du rapport des mois
+--printr(table);
+fibaro:debug("---");
+for i=1,12 do
+  	button = "ui.Label" .. i .. ".value";  
+    fibaro:call(selfId, "setProperty", button, "N.A");
 end
+
+for k, v in pairs(table) do
+ 	 -- calcul du cout
+  	local hp_next_bill = 0;
+  	local hc_next_bill = 0;
+  	local next_bill = 0;
+
+  	hpc_next_bill = math.floor(v.totalHP*HP_cost);
+  	hcc_next_bill = math.floor(v.totalHC*HC_cost);
+  	next_bill = math.floor(hpc_next_bill + hcc_next_bill );
+
+		fibaro:debug("* mois=" .. getmonth(v.mois) .. ", totalHP=" .. math.floor(v.totalHP) .. " kWh, totalHC=" .. math.floor(v.totalHC) .. " kWh, TOTAL==>" .. next_bill .. "€");
+
+		--update month labels
+		button = "ui.Label" .. v.mois .. ".value";  
+    fibaro:call(selfId, "setProperty", button, "HP=" .. math.floor(v.totalHP) .. " HC=" .. math.floor(v.totalHC) .. " => " .. next_bill .. "€");
+end
+
+fibaro:debug("---");
