@@ -67,8 +67,8 @@ local k,v,i; i=0; for k, v in pairs(jsonTable) do
     totalHC = 0;
     lastm = lastm+1
   end
-  totalHP = totalHP + v.hc_day;  
-  totalHC = totalHC + v.hp_day; 
+  totalHP = totalHP + v.hp_day;  
+  totalHC = totalHC + v.hc_day; 
   --fibaro:debug(v.date);
   --fibaro:debug(json.encode(v));  
   table[m] = { mois = m, totalHP = totalHP, totalHC = totalHC}
