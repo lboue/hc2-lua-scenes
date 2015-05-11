@@ -178,6 +178,10 @@ else
 		fibaro:debug("---");
 		fibaro:setGlobal("energylist", json.encode(energylist));
 		fibaro:debug("Export table to energylist variable");
+		
+		-- Last check label
+		LastCheck = os.date("%d/%m/%y %H:%M:%S")
+		fibaro:call(selfId, "setProperty", "ui.LastCheck.value", LastCheck)
 
   else
 		fibaro:debug("Connection problem!");
